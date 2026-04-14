@@ -1,6 +1,6 @@
 # AI 知识库问答系统
 
-一个基于 Python 的 AI 知识库问答系统，使用 Flask 框架、Qdrant 向量数据库、BGE-M3 嵌入模型和 LLM 实现智能问答。
+仅用于理解原理。一个基于 Python 的 AI 知识库问答系统，使用 Flask 框架、Qdrant 向量数据库、BGE-M3 嵌入模型和 LLM 实现智能问答。
 
 ## 🚀 特性
 
