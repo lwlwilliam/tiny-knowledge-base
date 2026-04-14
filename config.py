@@ -15,3 +15,10 @@ LLM_API_KEY = "sk-7e106dc8401d4155b2b9b8332212af90"
 # flask
 FLASK_HOST = "127.0.0.1"
 FLASK_PORT = 5000
+
+# knowledge base
+KNOWLEDGE_BASE = [
+    {"id": 1, "text": "退款流程：在订单页面点击申请退款，填写原因，3个工作日内处理完成。"},
+    {"id": 2, "text": "发货时间：下单后24小时内发货，节假日顺延。"},
+    {"id": 3, "text": "保修政策：产品自购买日起享有一年免费保修服务。"},
+]

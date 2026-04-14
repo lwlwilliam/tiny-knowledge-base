@@ -61,9 +61,7 @@
         </div>
         <div class="section">
             <h2>知识库导入</h2>
-            <textarea id="import-text" placeholder="请粘贴纯文本内容，每行一个知识点...">退款流程：在订单页面点击申请退款，填写原因，3个工作日内处理完成。
-发货时间：下单后24小时内发货，节假日顺延。
-保修政策：产品自购买日起享有一年免费保修服务。</textarea>
+            <textarea id="import-text" placeholder="请粘贴纯文本内容，每行一个知识点..."></textarea>
             <div class="import-controls">
                 <button id="import-btn">导入知识库</button>
                 <button id="clear-btn">清空知识库</button>
@@ -74,6 +72,7 @@
     <script>
         let currentMode='stream';
         document.addEventListener('DOMContentLoaded',function(){
+            getDefaultKnowledge();
             document.querySelectorAll('.mode-btn').forEach(btn=>{
                 btn.addEventListener('click',function(e){
                     const mode=this.getAttribute('data-mode');
@@ -85,6 +84,27 @@
             document.getElementById('clear-btn').addEventListener('click',clearKnowledge);
             document.querySelector('.mode-btn[data-mode="stream"]').classList.add('active');
         });
+        function getDefaultKnowledge(){
+            fetch('/api/knowledges/default').then(response=>{
+                if(!response.ok){
+                    throw new Error(`HTTP错误 ${response.status}`);
+                }
+                response.json().then(res => {
+                    if (res.knowledges !== undefined) {
+                        let text = '';
+                        res.knowledges.forEach(item => {
+                            text += item.text + "\n";
+                        });
+                        document.getElementById('import-text').value = text;
+                    }
+                });
+                
+            }).then(data=>{
+                return {};
+            }).catch(error=>{
+                console.error('获取默认知识失败:',error);
+            });
+        }
         function setMode(mode,event){
             currentMode=mode;
             document.querySelectorAll('.mode-btn').forEach(btn=>{
@@ -238,6 +258,7 @@
                 if(!response.ok){
                     throw new Error(`HTTP错误 ${response.status}`);
                 }
+                getDefaultKnowledge();
                 return response.json();
             }).then(data=>{
                 if(data.error){

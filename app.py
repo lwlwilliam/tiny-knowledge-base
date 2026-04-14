@@ -255,18 +255,20 @@ def api_health():
     return jsonify({'status': 'ok', 'timestamp': int(time.time())})
 
 
+@app.route('/api/knowledges/default', methods=['GET'])
+def api_knowledges():
+    """获取所有默认知识库条目"""
+    try:
+        return jsonify({'knowledges': config.KNOWLEDGE_BASE})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == "__main__":
-    # 初始化默认知识库
-    knowledge = [
-        {"id": 1, "text": "退款流程：在订单页面点击申请退款，填写原因，3个工作日内处理完成。"},
-        {"id": 2, "text": "发货时间：下单后24小时内发货，节假日顺延。"},
-        {"id": 3, "text": "保修政策：产品自购买日起享有一年免费保修服务。"},
-    ]
-    
     print("正在初始化知识库...")
     try:
         init_collection()
-        ingest(knowledge)
+        ingest(config.KNOWLEDGE_BASE)
         print("知识库初始化完成")
     except Exception as e:
         print(f"知识库初始化失败: {e}")
