@@ -5,389 +5,60 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* 基础重置 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.2rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #3498db, #2c3e50);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .mode-selector {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            justify-content: center;
-        }
-        
-        .mode-btn {
-            padding: 10px 24px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            color: #555;
-        }
-        
-        .mode-btn:hover {
-            border-color: #3498db;
-            color: #3498db;
-            transform: translateY(-2px);
-        }
-        
-        .mode-btn.active {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border-color: #3498db;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-        }
-        
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 16px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            resize: vertical;
-            font-family: inherit;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-            line-height: 1.5;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            background: white;
-        }
-        
-        textarea::placeholder {
-            color: #95a5a6;
-        }
-        
-        #ask-btn {
-            padding: 14px 28px;
-            font-size: 17px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            align-self: flex-start;
-            min-width: 140px;
-            letter-spacing: 0.5px;
-        }
-        
-        #ask-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-            background: linear-gradient(135deg, #2980b9, #1f6394);
-        }
-        
-        #ask-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        
-        #ask-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .response {
-            border: 2px solid #e0e0e0;
-            padding: 20px;
-            min-height: 150px;
-            white-space: pre-wrap;
-            border-radius: 12px;
-            background: #f8f9fa;
-            font-size: 15px;
-            line-height: 1.6;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .response.streaming {
-            background: #f0f7ff;
-            border-color: #d6e4ff;
-            border-left: 4px solid #3498db;
-        }
-        
-        .response::before {
-            content: '回答：';
-            display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-        
-        .response.streaming::before {
-            content: '正在生成回答...';
-            color: #3498db;
-        }
-        
-        /* 加载动画 */
-        .loading-dots {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        
-        .loading-dots::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-        
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-                border-radius: 12px;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
-            
-            textarea {
-                height: 100px;
-                padding: 14px;
-            }
-            
-            #ask-btn {
-                width: 100%;
-                align-self: stretch;
-            }
-            
-            .mode-selector {
-                flex-direction: column;
-            }
-            
-            .mode-btn {
-                width: 100%;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                padding: 16px;
-                gap: 16px;
-            }
-            
-            h1 {
-                font-size: 1.5rem;
-            }
-            
-            textarea {
-                font-size: 15px;
-                padding: 12px;
-            }
-            
-            .response {
-                padding: 16px;
-                font-size: 14px;
-            }
-        }
-        
-        /* 键盘快捷键提示 */
-        .keyboard-hint {
-            color: #7f8c8d;
-            font-size: 13px;
-            text-align: right;
-            margin-top: 8px;
-            font-style: italic;
-        }
-        
-        /* 区域样式 */
-        .section {
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            background: #fafafa;
-            margin-bottom: 20px;
-        }
-        
-        .section h2 {
-            color: #2c3e50;
-            margin-bottom: 16px;
-            font-size: 1.4rem;
-            font-weight: 600;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 8px;
-        }
-        
-        /* 导入控制区域 */
-        .import-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-        
-        #import-btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background: linear-gradient(135deg, #27ae60, #219653);
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        #import-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-            background: linear-gradient(135deg, #219653, #1e8449);
-        }
-        
-        #import-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        #clear-btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        #clear-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
-            background: linear-gradient(135deg, #c0392b, #a93226);
-        }
-        
-        #clear-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        #import-status {
-            margin-left: 12px;
-            font-size: 14px;
-            color: #7f8c8d;
-            flex-grow: 1;
-            text-align: right;
-        }
-        
-        .status-success {
-            color: #27ae60;
-        }
-        
-        .status-error {
-            color: #e74c3c;
-        }
-        
-        .status-loading {
-            color: #3498db;
-        }
-        
-        /* 响应式调整 */
-        @media (max-width: 768px) {
-            .section {
-                padding: 16px;
-            }
-            
-            .import-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            #import-btn, #clear-btn {
-                width: 100%;
-            }
-            
-            #import-status {
-                text-align: center;
-                margin-left: 0;
-                margin-top: 8px;
-            }
-        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;padding:20px;color:#333}
+        .container{max-width:800px;margin:0 auto;background:white;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);padding:30px;display:flex;flex-direction:column;gap:24px}
+        h1{color:#2c3e50;text-align:center;margin-bottom:10px;font-size:2.2rem;font-weight:600;background:linear-gradient(135deg,#3498db,#2c3e50);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .mode-selector{display:flex;gap:12px;margin-bottom:16px;justify-content:center}
+        .mode-btn{padding:10px 24px;border:2px solid #e0e0e0;background:white;cursor:pointer;border-radius:8px;font-size:15px;font-weight:500;transition:all 0.3s ease;color:#555}
+        .mode-btn:hover{border-color:#3498db;color:#3498db;transform:translateY(-2px)}
+        .mode-btn.active{background:linear-gradient(135deg,#3498db,#2980b9);color:white;border-color:#3498db;box-shadow:0 4px 12px rgba(52,152,219,0.3)}
+        textarea{width:100%;height:120px;padding:16px;font-size:16px;border:2px solid #e0e0e0;border-radius:12px;resize:vertical;font-family:inherit;transition:all 0.3s ease;background:#f8f9fa;line-height:1.5}
+        textarea:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.2);background:white}
+        textarea::placeholder{color:#95a5a6}
+        #ask-btn{padding:14px 28px;font-size:17px;background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;cursor:pointer;border-radius:12px;font-weight:600;transition:all 0.3s ease;align-self:flex-start;min-width:140px;letter-spacing:0.5px}
+        #ask-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(52,152,219,0.4);background:linear-gradient(135deg,#2980b9,#1f6394)}
+        #ask-btn:active:not(:disabled){transform:translateY(0)}
+        #ask-btn:disabled{background:#bdc3c7;cursor:not-allowed;transform:none;box-shadow:none}
+        .response{border:2px solid #e0e0e0;padding:20px;min-height:150px;white-space:pre-wrap;border-radius:12px;background:#f8f9fa;font-size:15px;line-height:1.6;transition:all 0.3s ease;position:relative}
+        .response.streaming{background:#f0f7ff;border-color:#d6e4ff;border-left:4px solid #3498db}
+        .response::before{content:'回答：';display:block;font-weight:600;color:#2c3e50;margin-bottom:10px;font-size:16px}
+        .response.streaming::before{content:'正在生成回答...';color:#3498db}
+        .loading-dots{display:inline-block;margin-left:5px}
+        .loading-dots::after{content:'...';animation:dots 1.5s steps(4,end) infinite}
+        @keyframes dots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
+        @media (max-width:768px){.container{padding:20px;margin:10px;border-radius:12px}h1{font-size:1.8rem}textarea{height:100px;padding:14px}#ask-btn{width:100%;align-self:stretch}.mode-selector{flex-direction:column}.mode-btn{width:100%}}
+        @media (max-width:480px){body{padding:10px}.container{padding:16px;gap:16px}h1{font-size:1.5rem}textarea{font-size:15px;padding:12px}.response{padding:16px;font-size:14px}}
+        .keyboard-hint{color:#7f8c8d;font-size:13px;text-align:right;margin-top:8px;font-style:italic}
+        .section{border:1px solid #e0e0e0;border-radius:12px;padding:20px;background:#fafafa;margin-bottom:20px}
+        .section h2{color:#2c3e50;margin-bottom:16px;font-size:1.4rem;font-weight:600;border-bottom:2px solid #3498db;padding-bottom:8px}
+        .import-controls{display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap}
+        #import-btn{padding:12px 24px;font-size:16px;background:linear-gradient(135deg,#27ae60,#219653);color:white;border:none;cursor:pointer;border-radius:8px;font-weight:600;transition:all 0.3s ease}
+        #import-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(39,174,96,0.4);background:linear-gradient(135deg,#219653,#1e8449)}
+        #import-btn:disabled{background:#bdc3c7;cursor:not-allowed;transform:none;box-shadow:none}
+        #clear-btn{padding:12px 24px;font-size:16px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;border:none;cursor:pointer;border-radius:8px;font-weight:600;transition:all 0.3s ease}
+        #clear-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(231,76,60,0.4);background:linear-gradient(135deg,#c0392b,#a93226)}
+        #clear-btn:disabled{background:#bdc3c7;cursor:not-allowed;transform:none;box-shadow:none}
+        #import-status{margin-left:12px;font-size:14px;color:#7f8c8d;flex-grow:1;text-align:right}
+        .status-success{color:#27ae60}
+        .status-error{color:#e74c3c}
+        .status-loading{color:#3498db}
+        @media (max-width:768px){.section{padding:16px}.import-controls{flex-direction:column;align-items:stretch}#import-btn,#clear-btn{width:100%}#import-status{text-align:center;margin-left:0;margin-top:8px}}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>知识库问答系统</h1>
-        
-        <!-- 模式选择器 -->
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="stream">流式模式</button>
             <button class="mode-btn" data-mode="normal">普通模式</button>
         </div>
-        
-        <!-- 问答区域 -->
         <div class="section">
             <h2>问答</h2>
             <textarea id="question" placeholder="请输入您的问题...">我想退款，怎么操作？</textarea>
             <button id="ask-btn">提问</button>
             <div class="response" id="response"></div>
         </div>
-        
-        <!-- 知识库导入区域 -->
         <div class="section">
             <h2>知识库导入</h2>
             <textarea id="import-text" placeholder="请粘贴纯文本内容，每行一个知识点...">退款流程：在订单页面点击申请退款，填写原因，3个工作日内处理完成。
@@ -400,348 +71,195 @@
             </div>
         </div>
     </div>
-    
     <script>
-        let currentMode = 'stream';
-        
-        // 初始化事件监听器
-        document.addEventListener('DOMContentLoaded', function() {
-            // 模式选择器
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    const mode = this.getAttribute('data-mode');
-                    setMode(mode, e);
+        let currentMode='stream';
+        document.addEventListener('DOMContentLoaded',function(){
+            document.querySelectorAll('.mode-btn').forEach(btn=>{
+                btn.addEventListener('click',function(e){
+                    const mode=this.getAttribute('data-mode');
+                    setMode(mode,e);
                 });
             });
-            
-            // 提问按钮
-            document.getElementById('ask-btn').addEventListener('click', askQuestion);
-            
-            // 导入按钮
-            document.getElementById('import-btn').addEventListener('click', importKnowledge);
-            
-            // 清空按钮
-            document.getElementById('clear-btn').addEventListener('click', clearKnowledge);
-            
-            // 初始化模式选择器
+            document.getElementById('ask-btn').addEventListener('click',askQuestion);
+            document.getElementById('import-btn').addEventListener('click',importKnowledge);
+            document.getElementById('clear-btn').addEventListener('click',clearKnowledge);
             document.querySelector('.mode-btn[data-mode="stream"]').classList.add('active');
         });
-        
-        function setMode(mode, event) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => {
+        function setMode(mode,event){
+            currentMode=mode;
+            document.querySelectorAll('.mode-btn').forEach(btn=>{
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
         }
-        
-        function askQuestion() {
-            const question = document.getElementById('question').value;
-            const responseDiv = document.getElementById('response');
-            const askBtn = document.getElementById('ask-btn');
-            
-            if (!question.trim()) {
+        function askQuestion(){
+            const question=document.getElementById('question').value;
+            const responseDiv=document.getElementById('response');
+            const askBtn=document.getElementById('ask-btn');
+            if(!question.trim()){
                 alert('请输入问题');
                 return;
             }
-            
-            responseDiv.innerHTML = '';
+            responseDiv.innerHTML='';
             responseDiv.classList.add('streaming');
-            askBtn.disabled = true;
-            
-            if (currentMode === 'stream') {
-                // 流式请求
-                fetch('/api/ask/stream', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: question })
-                })
-                .then(response => {
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    
-                    function read() {
-                        reader.read().then(({ done, value }) => {
-                            if (done) {
-                                responseDiv.classList.remove('streaming');
-                                askBtn.disabled = false;
-                                return;
-                            }
-                            
-                            const text = decoder.decode(value);
-                            responseDiv.innerHTML += text;
-                            responseDiv.scrollTop = responseDiv.scrollHeight;
-                            
-                            read();
-                        });
-                    }
-                    
-                    read();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    responseDiv.innerHTML = '请求失败: ' + error.message;
-                    responseDiv.classList.remove('streaming');
-                    askBtn.disabled = false;
-                });
-            } else {
-                // 普通请求
-                fetch('/api/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: question })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    responseDiv.innerHTML = data.answer;
-                    responseDiv.classList.remove('streaming');
-                    askBtn.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    responseDiv.innerHTML = '请求失败: ' + error.message;
-                    responseDiv.classList.remove('streaming');
-                    askBtn.disabled = false;
-                });
-            }
-        }
-        
-        // 按回车键提交
-        document.getElementById('question').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                askQuestion();
-            }
-        });
-        
-        // 添加键盘快捷键提示
-        const keyboardHint = document.createElement('div');
-        keyboardHint.className = 'keyboard-hint';
-        keyboardHint.textContent = '提示：按 Ctrl+Enter 快速提交';
-        document.getElementById('question').parentNode.insertBefore(keyboardHint, document.getElementById('question').nextSibling);
-        
-        // 改进错误处理
-        function showError(message) {
-            const responseDiv = document.getElementById('response');
-            responseDiv.innerHTML = '<div style="color: #e74c3c; padding: 10px; background: #fdf2f2; border-radius: 6px; border-left: 4px solid #e74c3c;">' +
-                '<strong>错误：</strong> ' + message + '<br>' +
-                '<small>请确保后端服务正常运行，或切换到普通模式重试。</small>' +
-                '</div>';
-            responseDiv.classList.remove('streaming');
-            document.getElementById('ask-btn').disabled = false;
-        }
-        
-        // 更新askQuestion函数中的错误处理
-        const originalAskQuestion = askQuestion;
-        askQuestion = function() {
-            const question = document.getElementById('question').value;
-            const responseDiv = document.getElementById('response');
-            const askBtn = document.getElementById('ask-btn');
-            
-            if (!question.trim()) {
-                alert('请输入问题');
-                return;
-            }
-            
-            responseDiv.innerHTML = '';
-            responseDiv.classList.add('streaming');
-            askBtn.disabled = true;
-            
-            if (currentMode === 'stream') {
-                // 流式请求
-                fetch('/api/ask/stream', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: question })
-                })
-                .then(response => {
-                    if (!response.ok) {
+            askBtn.disabled=true;
+            if(currentMode==='stream'){
+                fetch('/api/ask/stream',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({question:question})
+                }).then(response=>{
+                    if(!response.ok){
                         throw new Error(`HTTP错误 ${response.status}`);
                     }
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    
-                    function read() {
-                        reader.read().then(({ done, value }) => {
-                            if (done) {
+                    const reader=response.body.getReader();
+                    const decoder=new TextDecoder();
+                    function read(){
+                        reader.read().then(({done,value})=>{
+                            if(done){
                                 responseDiv.classList.remove('streaming');
-                                askBtn.disabled = false;
+                                askBtn.disabled=false;
                                 return;
                             }
-                            
-                            const text = decoder.decode(value);
-                            responseDiv.innerHTML += text;
-                            responseDiv.scrollTop = responseDiv.scrollHeight;
-                            
+                            const text=decoder.decode(value);
+                            responseDiv.innerHTML+=text;
+                            responseDiv.scrollTop=responseDiv.scrollHeight;
                             read();
-                        }).catch(error => {
-                            showError('流式响应读取失败：' + error.message);
+                        }).catch(error=>{
+                            showError('流式响应读取失败：'+error.message);
                         });
                     }
-                    
                     read();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('请求失败：' + error.message);
+                }).catch(error=>{
+                    console.error('Error:',error);
+                    showError('请求失败：'+error.message);
                 });
-            } else {
-                // 普通请求
-                fetch('/api/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: question })
-                })
-                .then(response => {
-                    if (!response.ok) {
+            }else{
+                fetch('/api/ask',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({question:question})
+                }).then(response=>{
+                    if(!response.ok){
                         throw new Error(`HTTP错误 ${response.status}`);
                     }
                     return response.json();
-                })
-                .then(data => {
-                    if (data.error) {
+                }).then(data=>{
+                    if(data.error){
                         showError(data.error);
-                    } else {
-                        responseDiv.innerHTML = data.answer;
+                    }else{
+                        responseDiv.innerHTML=data.answer;
                         responseDiv.classList.remove('streaming');
-                        askBtn.disabled = false;
+                        askBtn.disabled=false;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('请求失败：' + error.message);
+                }).catch(error=>{
+                    console.error('Error:',error);
+                    showError('请求失败：'+error.message);
                 });
             }
-        };
-        
-        // 知识库导入功能
-        function importKnowledge() {
-            const importText = document.getElementById('import-text').value;
-            const importBtn = document.getElementById('import-btn');
-            const clearBtn = document.getElementById('clear-btn');
-            const statusSpan = document.getElementById('import-status');
-            
-            if (!importText.trim()) {
+        }
+        function showError(message){
+            const responseDiv=document.getElementById('response');
+            responseDiv.innerHTML='<div style="color:#e74c3c;padding:10px;background:#fdf2f2;border-radius:6px;border-left:4px solid #e74c3c;"><strong>错误：</strong> '+message+'<br><small>请确保后端服务正常运行，或切换到普通模式重试。</small></div>';
+            responseDiv.classList.remove('streaming');
+            document.getElementById('ask-btn').disabled=false;
+        }
+        document.getElementById('question').addEventListener('keydown',function(e){
+            if(e.key==='Enter'&&e.ctrlKey){
+                askQuestion();
+            }
+        });
+        const keyboardHint=document.createElement('div');
+        keyboardHint.className='keyboard-hint';
+        keyboardHint.textContent='提示：按 Ctrl+Enter 快速提交';
+        document.getElementById('question').parentNode.insertBefore(keyboardHint,document.getElementById('question').nextSibling);
+        function importKnowledge(){
+            const importText=document.getElementById('import-text').value;
+            const importBtn=document.getElementById('import-btn');
+            const clearBtn=document.getElementById('clear-btn');
+            const statusSpan=document.getElementById('import-status');
+            if(!importText.trim()){
                 alert('请输入要导入的知识库内容');
                 return;
             }
-            
-            // 计算行数用于显示
-            const lines = importText.split("\\n").filter(line => line.trim());
-            const lineCount = lines.length;
-            
-            if (lineCount === 0) {
+            const lines=importText.split("\n").filter(line=>line.trim());
+            const lineCount=lines.length;
+            if(lineCount===0){
                 alert('没有找到有效的知识库内容');
                 return;
             }
-            
-            // 更新UI状态
-            importBtn.disabled = true;
-            clearBtn.disabled = true;
-            statusSpan.textContent = `正在导入 ${lineCount} 条知识...`;
-            statusSpan.className = 'status-loading';
-            
-            // 发送纯文本导入请求
-            fetch('/api/ingest/text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text: importText })
-            })
-            .then(response => {
-                if (!response.ok) {
+            importBtn.disabled=true;
+            clearBtn.disabled=true;
+            statusSpan.textContent=`正在导入 ${lineCount} 条知识...`;
+            statusSpan.className='status-loading';
+            fetch('/api/ingest/text',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({text:importText})
+            }).then(response=>{
+                if(!response.ok){
                     throw new Error(`HTTP错误 ${response.status}`);
                 }
                 return response.json();
-            })
-            .then(data => {
-                if (data.error) {
+            }).then(data=>{
+                if(data.error){
                     throw new Error(data.error);
                 }
-                statusSpan.textContent = `✅ 成功导入 ${data.count} 条知识`;
-                statusSpan.className = 'status-success';
-                
-                // 3秒后清除状态
-                setTimeout(() => {
-                    statusSpan.textContent = '';
-                    statusSpan.className = '';
-                }, 3000);
-            })
-            .catch(error => {
-                console.error('导入失败:', error);
-                statusSpan.textContent = `❌ 导入失败: ${error.message}`;
-                statusSpan.className = 'status-error';
-            })
-            .finally(() => {
-                importBtn.disabled = false;
-                clearBtn.disabled = false;
+                statusSpan.textContent=`✅ 成功导入 ${data.count} 条知识`;
+                statusSpan.className='status-success';
+                setTimeout(()=>{
+                    statusSpan.textContent='';
+                    statusSpan.className='';
+                },3000);
+            }).catch(error=>{
+                console.error('导入失败:',error);
+                statusSpan.textContent=`❌ 导入失败: ${error.message}`;
+                statusSpan.className='status-error';
+            }).finally(()=>{
+                importBtn.disabled=false;
+                clearBtn.disabled=false;
             });
         }
-        
-        // 清空知识库功能
-        function clearKnowledge() {
-            if (!confirm('确定要清空知识库吗？这将删除所有已导入的知识。')) {
+        function clearKnowledge(){
+            if(!confirm('确定要清空知识库吗？这将删除所有已导入的知识。')){
                 return;
             }
-            
-            const importBtn = document.getElementById('import-btn');
-            const clearBtn = document.getElementById('clear-btn');
-            const statusSpan = document.getElementById('import-status');
-            
-            // 更新UI状态
-            importBtn.disabled = true;
-            clearBtn.disabled = true;
-            statusSpan.textContent = '正在清空知识库...';
-            statusSpan.className = 'status-loading';
-            
-            // 发送初始化请求（这会删除并重新创建collection）
-            fetch('/api/init', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
+            const importBtn=document.getElementById('import-btn');
+            const clearBtn=document.getElementById('clear-btn');
+            const statusSpan=document.getElementById('import-status');
+            importBtn.disabled=true;
+            clearBtn.disabled=true;
+            statusSpan.textContent='正在清空知识库...';
+            statusSpan.className='status-loading';
+            fetch('/api/init',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'}
+            }).then(response=>{
+                if(!response.ok){
                     throw new Error(`HTTP错误 ${response.status}`);
                 }
                 return response.json();
-            })
-            .then(data => {
-                if (data.error) {
+            }).then(data=>{
+                if(data.error){
                     throw new Error(data.error);
                 }
-                statusSpan.textContent = '✅ 知识库已清空';
-                statusSpan.className = 'status-success';
-                
-                // 3秒后清除状态
-                setTimeout(() => {
-                    statusSpan.textContent = '';
-                    statusSpan.className = '';
-                }, 3000);
-            })
-            .catch(error => {
-                console.error('清空失败:', error);
-                statusSpan.textContent = `❌ 清空失败: ${error.message}`;
-                statusSpan.className = 'status-error';
-            })
-            .finally(() => {
-                importBtn.disabled = false;
-                clearBtn.disabled = false;
+                statusSpan.textContent='✅ 知识库已清空';
+                statusSpan.className='status-success';
+                setTimeout(()=>{
+                    statusSpan.textContent='';
+                    statusSpan.className='';
+                },3000);
+            }).catch(error=>{
+                console.error('清空失败:',error);
+                statusSpan.textContent=`❌ 清空失败: ${error.message}`;
+                statusSpan.className='status-error';
+            }).finally(()=>{
+                importBtn.disabled=false;
+                clearBtn.disabled=false;
             });
         }
-        
-        // 为导入文本框添加键盘快捷键
-        document.getElementById('import-text').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
+        document.getElementById('import-text').addEventListener('keydown',function(e){
+            if(e.key==='Enter'&&e.ctrlKey){
                 importKnowledge();
             }
         });

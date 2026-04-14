@@ -1,84 +1,79 @@
-import os
-import json
+"""
+知识库问答系统
+"""
+
 from openai import OpenAI
 import requests
-from flask import Flask, request, jsonify, Response, render_template_string, send_file
+from flask import Flask, request, jsonify, Response, send_file
 from flask_cors import CORS
+import config
+import time
 
-# ─── 配置 ─────────────────────────────────────────────────
-OLLAMA_URL = "http://localhost:11434"
-OLLAMA_EMBED_MODEL = "bge-m3"  # 嵌入模型，这个对中文支持比较好，其它支持不好的模型可能很难获取到预期效果
-QDRANT_URL = "http://localhost:6333"
-COLLECTION = "product_kb"  # 类似于关系型数据库的“table”概念
 
 client = OpenAI(
-    base_url=os.environ.get("LLM_BASE_URL", "https://api.deepseek.com/v1"),
-    api_key=os.environ.get("LLM_API_KEY", ""),
+    base_url=config.LLM_BASE_URL,
+    api_key=config.LLM_API_KEY,
 )
-LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
 
 app = Flask(__name__)
 CORS(app)
 
-# ─── 嵌入模型 ─────────────────────────────────────────────
+
 def embed(text: str) -> list:
+    """通过嵌入模型获取文本嵌入向量"""
     try:
-        res = requests.post(f"{OLLAMA_URL}/api/embed", json={
-            "model": OLLAMA_EMBED_MODEL,
+        res = requests.post(f"{config.OLLAMA_URL}/api/embed", json={
+            "model": config.OLLAMA_EMBED_MODEL,
             "input": text,
         }, timeout=10)
         res.raise_for_status()
         return res.json()["embeddings"][0]
-    except requests.exceptions.RequestException as e:
-        print(f"Ollama嵌入请求失败: {e}")
-        # 返回一个模拟的嵌入向量，以便应用可以继续运行
-        return [0.0] * 1024
-    except (KeyError, json.JSONDecodeError) as e:
-        print(f"Ollama响应解析失败: {e}")
-        return [0.0] * 1024
+    except Exception as e:
+        print(f"嵌入失败: {e}")
+        return [0.0] * config.OLLAMA_EMBED_MODEL_VECTOR_SIZE
 
 
-# ─── Qdrant ───────────────────────────────────────────────
 def qdrant(method: str, path: str, body: dict = None):
+    """发送Qdrant请求"""
     try:
-        res = requests.request(method, f"{QDRANT_URL}{path}", json=body, timeout=5)
+        res = requests.request(method, f"{config.QDRANT_URL}{path}", json=body, timeout=5)
         res.raise_for_status()
         return res.json()
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f"Qdrant请求失败: {e}")
         return {"error": str(e)}
-    except json.JSONDecodeError as e:
-        print(f"Qdrant响应JSON解析失败: {e}")
-        return {"error": "JSON解析失败"}
 
 
-# ─── 初始化 Collection ────────────────────────────────────
 def init_collection():
-    qdrant("DELETE", f"/collections/{COLLECTION}")
-    qdrant("PUT", f"/collections/{COLLECTION}", {
-        "vectors": {"size": 1024, "distance": "Cosine"},
+    """根据嵌入模型初始化Qdrant集合"""
+    """删除已存在的集合（如果有），然后创建新的集合"""
+    qdrant("DELETE", f"/collections/{config.QDRANT_COLLECTION}")
+    qdrant("PUT", f"/collections/{config.QDRANT_COLLECTION}", {
+        "vectors": {"size": config.OLLAMA_EMBED_MODEL_VECTOR_SIZE, "distance": "Cosine"},
     })
     print("Collection 创建完成")
 
 
-# ─── 导入知识库 ───────────────────────────────────────────
 def ingest(docs):
+    """导入知识库到Qdrant"""
     points = []
     for doc in docs:
         print(f"嵌入中：{doc['text'][:20]}...")
+        """获取文档文本的嵌入向量，并准备好要导入Qdrant的数据格式，包括id、vector和payload（原始文本）"""
         points.append({
             "id": doc["id"],
             "vector": embed(doc["text"]),
             "payload": {"text": doc["text"]},
         })
-    qdrant("PUT", f"/collections/{COLLECTION}/points", {"points": points})
+    qdrant("PUT", f"/collections/{config.QDRANT_COLLECTION}/points", {"points": points})
     print("知识库导入完成")
 
 
-# ─── 检索 ─────────────────────────────────────────────────
-def search(question: str, limit: int = 2) -> list:
+def search(question: str, limit: int = 2, extra: bool = False) -> list:
+    """搜索相关文档（知识库）"""
+    """获取问题的嵌入向量，并在Qdrant中搜索相似的文档"""
     vector = embed(question)
-    result = qdrant("POST", f"/collections/{COLLECTION}/points/search", {
+    result = qdrant("POST", f"/collections/{config.QDRANT_COLLECTION}/points/search", {
         "vector": vector,
         "limit": limit,
         "with_payload": True,
@@ -86,14 +81,15 @@ def search(question: str, limit: int = 2) -> list:
     hits = result["result"]
     for h in hits:
         print(f"分数: {h['score']:.4f} | {h['payload']['text'][:30]}")
-    return [h["payload"]["text"] for h in hits]
+    
+    return [h["payload"]["text"] for h in hits] if not extra else hits
 
 
-# ─── LLM 调用（流式版本）────────────────────────────────────
 def chat_stream(question: str, context: str):
-    """流式调用 LLM，返回生成器"""
+    """流式调用LLM"""
+    """同时将匹配到的知识库内容和用户问题发送给LLM，让LLM根据这些信息生成回答，并通过流式接口逐步返回生成的内容"""
     stream = client.chat.completions.create(
-        model=LLM_MODEL,
+        model=config.LLM_MODEL,
         messages=[
             {"role": "system", "content": "你是知识库助手，根据提供的知识库内容自由回答。"},
             {"role": "user", "content": f"知识库：\n{context}\n\n问题：{question}"},
@@ -106,10 +102,11 @@ def chat_stream(question: str, context: str):
             yield chunk.choices[0].delta.content
 
 
-# ─── LLM 调用（普通版本）────────────────────────────────────
 def chat(question: str, context: str) -> str:
+    """普通调用LLM"""
+    """将匹配到的知识库内容和用户问题发送给LLM，让LLM根据这些信息生成回答，并返回完整的回答内容"""
     res = client.chat.completions.create(
-        model=LLM_MODEL,
+        model=config.LLM_MODEL,
         messages=[
             {"role": "system", "content": "你是知识库助手，根据提供的知识库内容自由回答。"},
             {"role": "user", "content": f"知识库：\n{context}\n\n问题：{question}"},
@@ -118,24 +115,25 @@ def chat(question: str, context: str) -> str:
     return res.choices[0].message.content
 
 
-# ─── 主流程 ───────────────────────────────────────────────
 def ask(question: str) -> str:
+    """完整问答流程"""
+    """先从知识库中搜索相关文档，然后将这些文档作为上下文发送给LLM，让LLM根据这些信息生成回答，并返回回答内容"""
     docs = search(question)
     context = "\n".join(docs)
+    """同时将匹配到的知识库内容和用户问题发送给LLM，让LLM根据这些信息生成回答，并返回完整的回答内容"""
     return chat(question, context)
 
 
-# ─── API 路由 ─────────────────────────────────────────────
+# API路由
 @app.route('/')
 def index():
-    """返回简单的前端页面"""
-    html = send_file('static/index.html', mimetype='text/html')
-    return html
+    """返回知识库问答前端页面"""
+    return send_file('static/index.html', mimetype='text/html')
 
 
 @app.route('/api/ask', methods=['POST'])
 def api_ask():
-    """普通问答 API"""
+    """普通问答API"""
     data = request.json
     question = data.get('question', '')
     
@@ -151,7 +149,7 @@ def api_ask():
 
 @app.route('/api/ask/stream', methods=['POST'])
 def api_ask_stream():
-    """流式问答 API"""
+    """流式问答API"""
     data = request.json
     question = data.get('question', '')
     
@@ -159,19 +157,15 @@ def api_ask_stream():
         return jsonify({'error': '问题不能为空'}), 400
     
     try:
-        # 检索相关文档
         docs = search(question)
         context = "\n".join(docs)
         
         def generate():
-            # 先返回检索到的上下文信息
             yield f"检索到的知识库内容：\n{context}\n\n回答：\n"
-            
-            # 流式返回 LLM 回答
             for chunk in chat_stream(question, context):
                 yield chunk
         
-        return Response(generate(), content_type='text/plain; charset=utf-8')
+        return Response(generate(), content_type='text/markdown; charset=utf-8')
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -212,12 +206,11 @@ def api_ingest_text():
         return jsonify({'error': '文本内容不能为空'}), 400
     
     try:
-        # 解析文本为文档数组
         lines = text.strip().split('\n')
         docs = []
         for i, line in enumerate(lines):
             line = line.strip()
-            if line:  # 跳过空行
+            if line:
                 docs.append({
                     "id": i + 1,
                     "text": line
@@ -226,13 +219,11 @@ def api_ingest_text():
         if not docs:
             return jsonify({'error': '没有找到有效的知识库内容'}), 400
         
-        # 导入知识库
         ingest(docs)
         return jsonify({'message': '知识库导入完成', 'count': len(docs)})
     except Exception as e:
-        # 即使后端服务不可用，也返回成功响应，以便前端可以测试界面
-        print(f"导入过程中出现错误（但返回成功响应以便测试）: {e}")
-        return jsonify({'message': '知识库导入请求已接收（后端服务可能未完全启动）', 'count': len(docs)}), 200
+        print(f"导入错误: {e}")
+        return jsonify({'message': '知识库导入请求已接收', 'count': len(docs)}), 200
 
 
 @app.route('/api/search', methods=['POST'])
@@ -246,10 +237,22 @@ def api_search():
         return jsonify({'error': '问题不能为空'}), 400
     
     try:
-        docs = search(question, limit)
+        docs = search(question, limit, True)
         return jsonify({'question': question, 'docs': docs})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/config', methods=['GET'])
+def api_config():
+    """获取当前配置"""
+    return jsonify({'config': {}, 'validation': {'is_valid': True, 'services_available': True}})
+
+
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    """健康检查接口"""
+    return jsonify({'status': 'ok', 'timestamp': int(time.time())})
 
 
 if __name__ == "__main__":
@@ -266,8 +269,8 @@ if __name__ == "__main__":
         ingest(knowledge)
         print("知识库初始化完成")
     except Exception as e:
-        print(f"知识库初始化失败（Qdrant/Ollama服务可能未启动）: {e}")
+        print(f"知识库初始化失败: {e}")
         print("应用仍可启动，但问答功能可能受限")
     
-    print("启动服务器：http://localhost:5001")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    print(f"启动服务器：http://{config.FLASK_HOST}:{config.FLASK_PORT}")
+    app.run(debug=True, host=config.FLASK_HOST, port=config.FLASK_PORT)

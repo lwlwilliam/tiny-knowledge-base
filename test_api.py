@@ -1,9 +1,9 @@
 import requests
-import json
+import config
 import sys
 
 def test_api():
-    base_url = "http://localhost:5001"
+    base_url = f"http://{config.FLASK_HOST}:{config.FLASK_PORT}"
     
     print("测试知识库问答系统 API...")
     print("=" * 50)
@@ -78,7 +78,10 @@ def test_api():
             print(f"   问题: {data.get('question')}")
             print(f"   找到 {len(data.get('docs', []))} 个相关文档:")
             for i, doc in enumerate(data.get('docs', [])):
-                print(f"     {i+1}. {doc[:50]}...")
+                if doc.get("payload"):
+                    print(f"     {i+1}. {doc['payload']['text'][:50]}...")
+                else:
+                    print(f"     {i+1}. {doc[:50]}...")
         else:
             print(f"   ✗ 搜索 API 失败: {response.status_code}")
     except Exception as e:
