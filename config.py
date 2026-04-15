@@ -10,7 +10,7 @@ QDRANT_COLLECTION = "product_kb"  # 知识库集合名称
 # llm
 LLM_BASE_URL = "https://api.deepseek.com/v1"
 LLM_MODEL = "deepseek-chat"
-LLM_API_KEY = "sk-7e106dc8401d4155b2b9b8332212af90"
+LLM_API_KEY = ""
 
 # flask
 FLASK_HOST = "127.0.0.1"
